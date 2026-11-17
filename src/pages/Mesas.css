@@ -1,0 +1,182 @@
+
+.mesas-contenedor {
+  padding: 25px;
+  color: #fff;
+  min-height: 100%;
+}
+
+.mesas-encabezado {
+  margin-bottom: 25px;
+}
+
+.mesas-encabezado h1 {
+  font-size: 27px;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.mesas-encabezado p {
+  color: #aaa;
+  margin: 0;
+}
+
+.mesas-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.mesa-resumen-card {
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mesa-resumen-card span {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.mesa-resumen-card strong {
+  color: #fff;
+  font-size: 27px;
+}
+
+.mesas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.mesa-card {
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 14px;
+  padding: 20px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.mesa-card:hover {
+  transform: translateY(-3px);
+  border-color: #e53935;
+}
+
+.mesa-card-superior {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.mesa-card-superior h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.mesa-estado {
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #333;
+}
+
+.mesa-disponible .mesa-estado {
+  color: #62d995;
+}
+
+.mesa-ocupada .mesa-estado {
+  color: #ff7777;
+}
+
+.mesa-icono {
+  font-size: 43px;
+  text-align: center;
+  margin: 22px 0;
+}
+
+.mesa-card p {
+  color: #bbb;
+  font-size: 14px;
+}
+
+.mesa-cliente {
+  color: #fff !important;
+}
+
+.mesa-boton {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  margin-top: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mesa-boton-ocupar {
+  background: #d92323;
+  color: white;
+}
+
+.mesa-boton-ocupar:hover {
+  background: #b71919;
+}
+
+.mesa-boton-liberar {
+  background: #383838;
+  color: white;
+}
+
+.mesa-boton-liberar:hover {
+  background: #505050;
+}
+
+.mesas-error {
+  color: #ff7777;
+  background: #351b1b;
+  border: 1px solid #793232;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 650px) {
+  .mesas-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .mesas-contenedor {
+    padding: 15px;
+  }
+}
+
+.mesas-contenedor{max-width:1500px;margin:0 auto;padding:clamp(18px,3vw,38px)}
+.mesas-encabezado{padding:24px 26px;border:1px solid #39393e;border-radius:16px;background:radial-gradient(ellipse at 90% 10%,#4b1919 0,transparent 38%),#1e1e21}
+.mesas-encabezado h1{font-size:30px;letter-spacing:-1px}
+.mesas-resumen{gap:13px;margin-bottom:22px}
+.mesa-resumen-card{position:relative;overflow:hidden;border-color:#36363b;border-radius:14px;background:linear-gradient(140deg,#242428,#1d1d20);box-shadow:0 10px 25px #0002}
+.mesa-resumen-card:first-child{border-top:2px solid #777}
+.mesa-resumen-card:nth-child(2){border-top:2px solid #45c77a}
+.mesa-resumen-card:nth-child(3){border-top:2px solid #e3313b}
+.mesa-resumen-card strong{font-size:30px}
+.mesas-grid{grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:14px}
+.mesa-card{position:relative;overflow:hidden;border-color:#38383e;border-radius:15px;background:linear-gradient(145deg,#252529,#1e1e21);box-shadow:0 9px 22px #0002}
+.mesa-card:before{position:absolute;left:0;top:0;bottom:0;width:3px;background:#62626a;content:""}
+.mesa-card.mesa-ocupada:before{background:#e3313b}
+.mesa-card.mesa-disponible:before{background:#45c77a}
+.mesa-card:hover{border-color:#744044;transform:translateY(-3px);box-shadow:0 15px 30px #0003}
+.mesa-estado{background:#303035}
+.mesa-disponible .mesa-estado{color:#72dda0;background:#183326}
+.mesa-ocupada .mesa-estado{color:#ff777d;background:#3b2023}
+.mesa-icono{display:grid;place-items:center;width:62px;height:62px;margin:20px auto;border:1px solid #ffffff0c;border-radius:18px;background:#ffffff06;font-size:33px}
+.mesa-card p{font-size:12px}
+.mesa-boton{min-height:42px;border-radius:9px}
+.mesa-boton-liberar{border:1px solid #48484f;background:#2c2c31}
+.mesas-error{border:1px solid #77363a}
+@media(max-width:650px){.mesas-resumen{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.mesa-resumen-card{padding:13px}.mesa-resumen-card span{font-size:11px}.mesa-resumen-card strong{font-size:22px}.mesas-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mesa-card{padding:14px}.mesa-icono{margin:15px auto}.mesas-encabezado{padding:20px}}

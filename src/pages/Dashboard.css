@@ -1,0 +1,68 @@
+
+.dashboard {
+  min-height: calc(100vh - 60px);
+  padding: 35px;
+  background: #f4f4f4;
+  color: #171717;
+}
+
+.dashboard-heading h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.dashboard-heading p {
+  color: #777;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+  margin-top: 30px;
+}
+
+.dashboard-card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px #00000012;
+}
+
+.dashboard-icon {
+  font-size: 35px;
+}
+
+.dashboard-card h2 {
+  margin: 15px 0 8px;
+}
+
+.dashboard-card p {
+  color: #777;
+}
+
+.dashboard-card button {
+  background: #e52222;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 20px;
+  cursor: pointer;
+}
+
+.dashboard{min-height:calc(100vh - 72px);padding:clamp(24px,4vw,54px);color:#f4f4f5;background:transparent}
+.dashboard-heading{max-width:980px;margin:0 auto 30px;padding:34px;border:1px solid #39363a;border-radius:18px;background:radial-gradient(ellipse at 85% 8%,#5a1c2248,transparent 40%),linear-gradient(120deg,#222225,#19191c);box-shadow:0 18px 55px #0003}
+.dashboard-heading:before{content:"CENTRO DE OPERACIONES";display:block;margin-bottom:12px;color:#ff666c;font-size:10px;letter-spacing:1.8px;font-weight:800}
+.dashboard-heading h1{margin:0 0 9px;font-size:clamp(27px,4vw,38px);letter-spacing:-1.3px}
+.dashboard-heading p{margin:0;color:#a3a3aa}
+.dashboard-grid{max-width:980px;margin:0 auto;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.dashboard-section-label{display:flex;align-items:end;justify-content:space-between;max-width:980px;margin:0 auto 14px}.dashboard-section-label>div>span{color:#ff666c;font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.dashboard-section-label h2{margin:5px 0 0;font-size:20px}.dashboard-module-count{padding:6px 9px;border:1px solid #39393e;border-radius:20px;color:#aaa;font-size:10px;background:#202023}
+.dashboard-card{position:relative;overflow:hidden;min-height:184px;padding:22px;border:1px solid #343439;border-radius:15px;background:linear-gradient(145deg,#242427,#1d1d20);box-shadow:0 10px 25px #0002;transition:transform .2s,border-color .2s,box-shadow .2s}
+.dashboard-card:after{position:absolute;right:-27px;top:-34px;width:100px;height:100px;border:1px solid #f44a4a18;border-radius:50%;content:""}
+.dashboard-card:hover{transform:translateY(-4px);border-color:#774044;box-shadow:0 16px 32px #0004}
+.dashboard-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid #773b402e;border-radius:12px;background:#e3313b15;color:#ff737a;font-size:22px}
+.dashboard-card h2{margin:16px 0 5px;font-size:17px}
+.dashboard-card p{margin:0 0 17px;color:#96969e;font-size:12px}
+.dashboard-card button{padding:8px 12px;border-radius:8px;font-size:11px}
+@media(max-width:600px){.dashboard{padding:18px}.dashboard-heading{padding:23px}.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.dashboard-card{padding:15px;min-height:170px}.dashboard-card h2{font-size:15px}.dashboard-card p{font-size:11px}}
+@media(max-width:380px){.dashboard-grid{grid-template-columns:1fr}}

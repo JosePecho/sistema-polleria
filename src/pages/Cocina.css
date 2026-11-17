@@ -1,0 +1,235 @@
+
+.cocina-contenedor {
+  padding: 25px;
+  min-height: 100%;
+  color: #fff;
+}
+
+.cocina-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.cocina-encabezado h1 {
+  margin: 0 0 8px;
+  font-size: 27px;
+}
+
+.cocina-encabezado p {
+  margin: 0;
+  color: #aaa;
+}
+
+.cocina-en-vivo {
+  color: #62d995;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.cocina-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.cocina-resumen-card {
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cocina-resumen-card span {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.cocina-resumen-card strong {
+  font-size: 27px;
+}
+
+.cocina-listado-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.cocina-listado-encabezado h2 {
+  font-size: 20px;
+}
+
+.cocina-listado-encabezado select {
+  background: #252525;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 7px;
+  padding: 10px;
+}
+
+.cocina-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.cocina-pedido {
+  background: #202020;
+  border: 1px solid #414141;
+  border-radius: 13px;
+  padding: 20px;
+}
+
+.cocina-pedido-superior {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #414141;
+}
+
+.cocina-pedido-superior h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.cocina-estado {
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #383838;
+}
+
+.estado-pendiente {
+  color: #ffcf65;
+}
+
+.estado-preparando {
+  color: #65b9ff;
+}
+
+.estado-listo {
+  color: #62d995;
+}
+
+.estado-entregado {
+  color: #aaa;
+}
+
+.cocina-productos {
+  padding: 15px 0;
+}
+
+.cocina-producto {
+  display: flex;
+  gap: 12px;
+  padding: 7px 0;
+  color: #ddd;
+}
+
+.cocina-producto strong {
+  color: #ff5555;
+}
+
+.cocina-observaciones {
+  background: #303030;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.cocina-observaciones p {
+  margin-bottom: 0;
+  color: #ccc;
+}
+
+.cocina-acciones button {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  background: #e32626;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cocina-acciones button:hover {
+  background: #b91c1c;
+}
+
+.cocina-finalizado {
+  color: #62d995;
+  text-align: center;
+  font-weight: bold;
+}
+
+.cocina-vacio {
+  text-align: center;
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 45px 20px;
+}
+
+.cocina-vacio span {
+  font-size: 40px;
+}
+
+.cocina-vacio p {
+  color: #aaa;
+}
+
+.cocina-error {
+  color: #ff7777;
+  padding: 12px;
+  background: #351b1b;
+  border-radius: 8px;
+}
+
+@media (max-width: 650px) {
+  .cocina-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .cocina-listado-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cocina-contenedor {
+    padding: 15px;
+  }
+}
+
+.cocina-contenedor{max-width:1600px;margin:0 auto;padding:clamp(18px,3vw,38px)}
+.cocina-encabezado{padding:24px 26px;border:1px solid #39393e;border-radius:16px;background:radial-gradient(ellipse at 90% 10%,#4b1919 0,transparent 38%),#1e1e21}
+.cocina-encabezado h1{font-size:30px;letter-spacing:-1px}
+.cocina-en-vivo{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid #28533a;border-radius:20px;background:#183224;font-size:10px;letter-spacing:.7px}
+.cocina-en-vivo:before{content:"";width:7px;height:7px;border-radius:50%;background:#45c77a;box-shadow:0 0 10px #45c77a}
+.cocina-resumen{gap:13px;margin-bottom:22px}
+.cocina-resumen-card{border-color:#38383e;border-radius:14px;background:linear-gradient(145deg,#242428,#1d1d20);box-shadow:0 10px 24px #0002}
+.cocina-resumen-card:first-child{border-top:2px solid #eab758}.cocina-resumen-card:nth-child(2){border-top:2px solid #65a9f7}.cocina-resumen-card:nth-child(3){border-top:2px solid #45c77a}
+.cocina-listado{padding:22px;border:1px solid #38383e;border-radius:15px;background:#1c1c1f}
+.cocina-listado-encabezado h2{font-size:20px}
+.cocina-listado-encabezado select{border-color:#414147;background:#26262a}
+.cocina-grid{grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:14px}
+.cocina-pedido{position:relative;overflow:hidden;border-color:#39393e;border-radius:14px;background:linear-gradient(145deg,#252529,#1d1d20);box-shadow:0 9px 24px #0002;transition:transform .18s,border-color .18s}
+.cocina-pedido:hover{transform:translateY(-2px);border-color:#55555d}
+.cocina-pedido:has(.estado-pendiente){border-top:2px solid #d89e39}
+.cocina-pedido:has(.estado-preparando){border-top:2px solid #438bd8}
+.cocina-pedido:has(.estado-listo){border-top:2px solid #32a764}
+.cocina-estado{background:#303035}.estado-pendiente{color:#f3c366;background:#3b3020}.estado-preparando{color:#82bafa;background:#202f42}.estado-listo{color:#76dda0;background:#1d3829}.estado-entregado{color:#aaa}
+.cocina-observaciones{border:1px solid #444047;background:#2b2729}
+.cocina-acciones button{border-radius:9px}
+.cocina-vacio{border-color:#39393e;border-radius:14px;background:#202023}
+@media(max-width:650px){.cocina-contenedor{padding:16px}.cocina-resumen{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cocina-resumen-card{padding:13px}.cocina-resumen-card span{font-size:11px}.cocina-resumen-card strong{font-size:21px}.cocina-listado{padding:15px}}

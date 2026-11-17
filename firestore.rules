@@ -1,0 +1,241 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =====================================
+    // AUTENTICACIÓN Y PERFILES
+    // =====================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profileExists() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function activeUser() {
+      return profileExists()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.activo == true
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol
+          in ['administrador', 'mozo', 'cocina', 'cajero'];
+    }
+
+    function hasRole(roles) {
+      return activeUser()
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol in roles;
+    }
+
+    function validState(state) {
+      return state in ['Disponible', 'Ocupada'];
+    }
+
+    function validOrderState(state) {
+      return state in ['Pendiente', 'Preparando', 'Listo', 'Entregado'];
+    }
+
+    function paymentExistsAfter(paymentId) {
+      return paymentId is string
+        && existsAfter(/databases/$(database)/documents/pagos/$(paymentId));
+    }
+
+    // =====================================
+    // USUARIOS
+    // =====================================
+
+    match /usuarios/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    // =====================================
+    // MESAS
+    // =====================================
+
+    match /mesas/{mesaId} {
+
+      allow read: if hasRole(['administrador', 'mozo']);
+
+      allow create: if hasRole(['administrador', 'mozo'])
+        && request.resource.data.keys().hasOnly([
+          'numero', 'capacidad', 'estado', 'cliente', 'fechaActualizacion'
+        ])
+        && request.resource.data.keys().hasAll([
+          'numero', 'capacidad', 'estado', 'cliente', 'fechaActualizacion'
+        ])
+        && request.resource.data.numero is int
+        && request.resource.data.capacidad is int
+        && request.resource.data.estado == 'Disponible'
+        && request.resource.data.cliente == ''
+        && request.resource.data.fechaActualizacion == request.time;
+
+      allow update: if hasRole(['administrador', 'mozo'])
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['estado', 'cliente', 'fechaActualizacion'])
+        && validState(request.resource.data.estado)
+        && request.resource.data.cliente is string
+        && request.resource.data.fechaActualizacion == request.time
+        && (
+          (request.resource.data.estado == 'Ocupada'
+            && request.resource.data.cliente.size() > 0)
+          ||
+          (request.resource.data.estado == 'Disponible'
+            && request.resource.data.cliente == '')
+        );
+
+      allow delete: if false;
+    }
+
+    // =====================================
+    // PRODUCTOS
+    // =====================================
+
+    match /productos/{productoId} {
+
+      allow read: if hasRole(['administrador', 'mozo']);
+
+      allow create: if hasRole(['administrador'])
+        && request.resource.data.keys().hasOnly([
+          'nombre', 'categoria', 'precio', 'stock', 'disponible', 'fechaRegistro'
+        ])
+        && request.resource.data.keys().hasAll([
+          'nombre', 'categoria', 'precio', 'stock', 'disponible', 'fechaRegistro'
+        ])
+        && request.resource.data.nombre is string
+        && request.resource.data.categoria is string
+        && request.resource.data.precio is number
+        && request.resource.data.precio > 0
+        && request.resource.data.stock is int
+        && request.resource.data.stock >= 0
+        && request.resource.data.disponible is bool
+        && request.resource.data.fechaRegistro == request.time;
+
+      allow update: if hasRole(['administrador'])
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['stock', 'disponible'])
+        && request.resource.data.stock is int
+        && request.resource.data.stock >= 0
+        && request.resource.data.disponible is bool;
+
+      allow delete: if hasRole(['administrador']);
+    }
+
+    // =====================================
+    // PEDIDOS
+    // =====================================
+
+    match /pedidos/{pedidoId} {
+
+      allow read: if activeUser();
+
+      allow create: if hasRole(['administrador', 'mozo'])
+        && request.resource.data.keys().hasOnly([
+          'numeroMesa', 'mesaId', 'items', 'total', 'observaciones',
+          'estado', 'tipo', 'usuarioId', 'fechaCreacion'
+        ])
+        && request.resource.data.keys().hasAll([
+          'numeroMesa', 'mesaId', 'items', 'total', 'observaciones',
+          'estado', 'tipo', 'usuarioId', 'fechaCreacion'
+        ])
+        && request.resource.data.numeroMesa is int
+        && request.resource.data.mesaId is string
+        && exists(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId))
+        && get(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId)).data.numero
+          == request.resource.data.numeroMesa
+        && get(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId)).data.estado
+          == 'Ocupada'
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.total is number
+        && request.resource.data.total >= 0
+        && request.resource.data.observaciones is string
+        && request.resource.data.estado == 'Pendiente'
+        && request.resource.data.tipo == 'Comanda'
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.fechaCreacion == request.time;
+
+      allow update: if (
+        hasRole(['administrador', 'cocina'])
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['estado'])
+        && validOrderState(request.resource.data.estado)
+        && request.resource.data.estado != resource.data.estado
+      )
+      || (
+        hasRole(['administrador', 'cajero'])
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['estadoPago', 'pagoId', 'fechaPago'])
+        && (
+          !('estadoPago' in resource.data)
+          || resource.data.estadoPago != 'Pagado'
+        )
+        && request.resource.data.estadoPago == 'Pagado'
+        && request.resource.data.pagoId is string
+        && request.resource.data.fechaPago == request.time
+        && paymentExistsAfter(request.resource.data.pagoId)
+        && getAfter(/databases/$(database)/documents/pagos/$(request.resource.data.pagoId))
+          .data.pedidosIds.hasAny([pedidoId])
+      );
+
+      allow delete: if false;
+    }
+
+    // =====================================
+    // PAGOS
+    // =====================================
+
+    match /pagos/{pagoId} {
+
+      allow read: if hasRole(['administrador', 'cajero']);
+
+      allow create: if hasRole(['administrador', 'cajero'])
+        && request.resource.data.keys().hasOnly([
+          'numeroMesa', 'mesaId', 'pedidosIds', 'total', 'metodo',
+          'recibido', 'vuelto', 'usuarioId', 'fecha'
+        ])
+        && request.resource.data.keys().hasAll([
+          'numeroMesa', 'mesaId', 'pedidosIds', 'total', 'metodo',
+          'recibido', 'vuelto', 'usuarioId', 'fecha'
+        ])
+        && request.resource.data.numeroMesa is int
+        && request.resource.data.mesaId is string
+        && request.resource.data.pedidosIds is list
+        && request.resource.data.pedidosIds.size() > 0
+        && request.resource.data.total is number
+        && request.resource.data.total > 0
+        && request.resource.data.metodo in ['Efectivo', 'Tarjeta', 'Yape', 'Plin']
+        && request.resource.data.recibido is number
+        && request.resource.data.vuelto is number
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.fecha == request.time
+        && (
+          (
+            request.resource.data.metodo == 'Efectivo'
+            && request.resource.data.recibido >= request.resource.data.total
+            && request.resource.data.vuelto ==
+              request.resource.data.recibido - request.resource.data.total
+          )
+          ||
+          (
+            request.resource.data.metodo != 'Efectivo'
+            && request.resource.data.recibido == request.resource.data.total
+            && request.resource.data.vuelto == 0
+          )
+        );
+
+      allow update, delete: if false;
+    }
+
+    // =====================================
+    // BLOQUEO DEL RESTO DE COLECCIONES
+    // =====================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
