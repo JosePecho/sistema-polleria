@@ -4,11 +4,13 @@ import {
   collection,
   onSnapshot,
   doc,
-  updateDoc,
   query,
   orderBy,
+  writeBatch,
 } from "firebase/firestore";
-import { db } from "../services/firebase";
+
+import { auth, db } from "../services/firebase";
+import { agregarAuditoriaAlLote } from "../services/auditoria";
 import "./Cocina.css";
 
 interface ItemPedido {
@@ -20,6 +22,7 @@ interface ItemPedido {
 interface Pedido {
   id: string;
   numeroMesa: number;
+  mesaId?: string;
   items: ItemPedido[];
   total: number;
   observaciones?: string;
@@ -62,12 +65,62 @@ export default function Cocina() {
     return () => cancelar();
   }, []);
 
-  const cambiarEstado = async (pedidoId: string, nuevoEstado: string) => {
+  // =====================================
+  // CAMBIAR ESTADO Y REGISTRAR AUDITORÍA
+  // =====================================
+
+  const cambiarEstado = async (
+    pedidoId: string,
+    nuevoEstado: string
+  ) => {
+    const pedido = pedidos.find((item) => item.id === pedidoId);
+
+    if (!pedido) {
+      alert("No se encontró la comanda seleccionada.");
+      return;
+    }
+
+    const estadosPermitidos = [
+      "Pendiente",
+      "Preparando",
+      "Listo",
+      "Entregado",
+    ];
+
+    if (!estadosPermitidos.includes(nuevoEstado)) {
+      alert("El estado seleccionado no es válido.");
+      return;
+    }
+
+    const usuario = auth.currentUser;
+
+    if (!usuario) {
+      alert("Debes iniciar sesión para actualizar la comanda.");
+      return;
+    }
+
     try {
-      await updateDoc(doc(db, "pedidos", pedidoId), {
+      const lote = writeBatch(db);
+
+      lote.update(doc(db, "pedidos", pedidoId), {
         estado: nuevoEstado,
       });
-    } catch {
+
+      agregarAuditoriaAlLote(lote, {
+        accion: "PEDIDO_ESTADO_CAMBIADO",
+        descripcion: `La comanda de la mesa ${pedido.numeroMesa} cambió de ${pedido.estado} a ${nuevoEstado}.`,
+        entidadId: pedidoId,
+        ...(pedido.mesaId ? { mesaId: pedido.mesaId } : {}),
+        numeroMesa: pedido.numeroMesa,
+        detalles: {
+          estadoAnterior: pedido.estado,
+          estadoNuevo: nuevoEstado,
+        },
+      });
+
+      await lote.commit();
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
       alert("No se pudo actualizar el pedido. Revisa los permisos.");
     }
   };
@@ -100,6 +153,7 @@ export default function Cocina() {
           <h1>Panel de cocina</h1>
           <p>Control de comandas y preparación de pedidos.</p>
         </div>
+
         <span className="cocina-en-vivo">● EN VIVO</span>
       </header>
 
@@ -108,10 +162,12 @@ export default function Cocina() {
           <span>Pendientes</span>
           <strong>{pendientes}</strong>
         </article>
+
         <article className="cocina-resumen-card">
           <span>Preparando</span>
           <strong>{preparando}</strong>
         </article>
+
         <article className="cocina-resumen-card">
           <span>Listos</span>
           <strong>{listos}</strong>
@@ -121,6 +177,7 @@ export default function Cocina() {
       <section className="cocina-listado">
         <div className="cocina-listado-encabezado">
           <h2>Comandas recibidas</h2>
+
           <select
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
@@ -147,6 +204,7 @@ export default function Cocina() {
               <article className="cocina-pedido" key={pedido.id}>
                 <div className="cocina-pedido-superior">
                   <h3>Mesa {pedido.numeroMesa}</h3>
+
                   <span
                     className={`cocina-estado estado-${pedido.estado.toLowerCase()}`}
                   >

@@ -114,6 +114,10 @@ beforeEach(async () => {
 const asRole = (rol) =>
   environment.authenticatedContext(ids[rol]).firestore();
 
+// =====================================
+// PRUEBA 1: PERFILES Y ROLES
+// =====================================
+
 test('cada rol puede leer su propio perfil, pero no otro perfil ni listar usuarios', async () => {
   for (const [rol, uid] of Object.entries(ids)) {
     const db = asRole(rol);
@@ -145,6 +149,10 @@ test('cada rol puede leer su propio perfil, pero no otro perfil ni listar usuari
     );
   }
 });
+
+// =====================================
+// PRUEBA 2: LECTURAS SEGUN LOS ROLES
+// =====================================
 
 test('lecturas reflejan los cuatro roles asignados', async () => {
   for (const rol of ['administrador', 'mozo']) {
@@ -178,6 +186,10 @@ test('lecturas reflejan los cuatro roles asignados', async () => {
     );
   }
 });
+
+// =====================================
+// PRUEBA 3: PRODUCTOS Y MESAS
+// =====================================
 
 test('solo administrador crea y elimina productos; mozo actualiza una mesa', async () => {
   const admin = asRole('administrador');
@@ -226,6 +238,10 @@ test('solo administrador crea y elimina productos; mozo actualiza una mesa', asy
   );
 });
 
+// =====================================
+// PRUEBA 4: PEDIDOS Y COCINA
+// =====================================
+
 test('mozo crea pedidos; cocina solo cambia el estado de comanda', async () => {
   const mozo = asRole('mozo');
   const cocina = asRole('cocina');
@@ -271,12 +287,17 @@ test('mozo crea pedidos; cocina solo cambia el estado de comanda', async () => {
   );
 });
 
-test('cajero registra pago y actualiza pedido en un lote; roles sin permiso fallan', async () => {
+// =====================================
+// PRUEBA 5: PAGO Y LIBERACION DE MESA
+// =====================================
+
+test('cajero registra pago, actualiza pedido y libera la mesa en un lote', async () => {
   const cajero = asRole('cajero');
   const pagoId = 'pago-nuevo';
 
   const batch = writeBatch(cajero);
 
+  // 1. Registrar el pago.
   batch.set(doc(cajero, 'pagos', pagoId), {
     numeroMesa: 1,
     mesaId: 'mesa-1',
@@ -289,19 +310,60 @@ test('cajero registra pago y actualiza pedido en un lote; roles sin permiso fall
     fecha: serverTimestamp(),
   });
 
+  // 2. Marcar el pedido como pagado.
   batch.update(doc(cajero, 'pedidos', 'pedido-1'), {
     estadoPago: 'Pagado',
     pagoId,
     fechaPago: serverTimestamp(),
   });
 
+  // 3. Liberar la mesa.
+  batch.update(doc(cajero, 'mesas', 'mesa-1'), {
+    estado: 'Disponible',
+    cliente: '',
+    fechaActualizacion: serverTimestamp(),
+    ultimoPagoId: pagoId,
+  });
+
+  // 4. Confirmar todas las operaciones juntas.
   await assertSucceeds(batch.commit());
 
+  // 5. Comprobar que el pedido quedó pagado.
+  const pedidoActual = await getDoc(
+    doc(cajero, 'pedidos', 'pedido-1')
+  );
+
+  if (pedidoActual.data().estadoPago !== 'Pagado') {
+    throw new Error('El pedido no quedó marcado como pagado.');
+  }
+
+  // 6. Comprobar la mesa desde el entorno de pruebas.
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+
+    const mesaActual = await getDoc(
+      doc(db, 'mesas', 'mesa-1')
+    );
+
+    if (mesaActual.data().estado !== 'Disponible') {
+      throw new Error('La mesa no quedó liberada.');
+    }
+
+    if (mesaActual.data().cliente !== '') {
+      throw new Error('El nombre del cliente no se limpió.');
+    }
+
+    if (mesaActual.data().ultimoPagoId !== pagoId) {
+      throw new Error('La mesa no guardó el identificador del pago.');
+    }
+  });
+
+  // 7. El cajero no puede eliminar pagos.
   await assertFails(
     deleteDoc(doc(cajero, 'pagos', pagoId))
   );
 
-  // Corrección: se utiliza una sola instancia de Firestore.
+  // 8. Cocina no puede registrar pagos.
   const cocina = asRole('cocina');
   const cocinaBatch = writeBatch(cocina);
 
@@ -322,6 +384,10 @@ test('cajero registra pago y actualiza pedido en un lote; roles sin permiso fall
 
   await assertFails(cocinaBatch.commit());
 });
+
+// =====================================
+// PRUEBA 6: PERFILES NO AUTORIZADOS
+// =====================================
 
 test('rechaza perfiles ausentes, inactivos y con UID no coincidente', async () => {
   await environment.withSecurityRulesDisabled(async (context) => {

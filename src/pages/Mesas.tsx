@@ -7,6 +7,7 @@ import {
   updateDoc,
   setDoc,
   serverTimestamp,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 import "./Mesas.css";
@@ -80,13 +81,41 @@ export default function Mesas() {
     }
 
     try {
-      await updateDoc(doc(db, "mesas", mesa.id), {
-        estado: "Ocupada",
-        cliente: cliente.trim(),
-        fechaActualizacion: serverTimestamp(),
+      const referenciaMesa = doc(db, "mesas", mesa.id);
+
+      await runTransaction(db, async (transaction) => {
+        const documento = await transaction.get(referenciaMesa);
+
+        if (!documento.exists()) {
+          throw new Error("MESA_NO_EXISTE");
+        }
+
+        const datosActuales = documento.data();
+
+        if (datosActuales.estado !== "Disponible") {
+          throw new Error("MESA_YA_OCUPADA");
+        }
+
+        transaction.update(referenciaMesa, {
+          estado: "Ocupada",
+          cliente: cliente.trim(),
+          fechaActualizacion: serverTimestamp(),
+        });
       });
-    } catch {
-      alert("No se pudo ocupar la mesa. Revisa los permisos de Firebase.");
+
+      alert(`Mesa ${mesa.numero} ocupada correctamente.`);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "MESA_YA_OCUPADA"
+      ) {
+        alert(
+          `La mesa ${mesa.numero} ya fue ocupada por otro usuario. Actualiza la pantalla y selecciona otra mesa.`
+        );
+      } else {
+        console.error("Error al ocupar mesa:", error);
+        alert("No se pudo ocupar la mesa. Revisa los permisos de Firebase.");
+      }
     }
   };
 

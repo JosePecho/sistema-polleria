@@ -1,3 +1,4 @@
+
 import { useState, type FormEvent } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
@@ -29,8 +30,12 @@ export default function Login({ sessionError, onLoginAttempt }: LoginProps) {
 
     try {
       setCargando(true);
-      // App valida el perfil cuando onAuthStateChanged detecta esta sesión.
-      await signInWithEmailAndPassword(auth, correo.trim(), password);
+
+      await signInWithEmailAndPassword(
+        auth,
+        correo.trim(),
+        password
+      );
     } catch (err: unknown) {
       const codigo = (err as { code?: string }).code;
 
@@ -58,9 +63,11 @@ export default function Login({ sessionError, onLoginAttempt }: LoginProps) {
       <section className="login-card">
         <header className="login-header">
           <div className="login-logo">♨</div>
+
           <h1>
             POLLERÍA <span>PRO</span>
           </h1>
+
           <p>Sistema de gestión de pedidos</p>
         </header>
 
@@ -69,18 +76,23 @@ export default function Login({ sessionError, onLoginAttempt }: LoginProps) {
           <p>Ingresa tus credenciales para continuar</p>
         </div>
 
-        <form onSubmit={iniciarSesion}>
+        <form onSubmit={iniciarSesion} autoComplete="off">
           <div className="form-group">
             <label htmlFor="correo">Correo electrónico</label>
+
             <div className="input-container">
               <span className="input-icon">✉</span>
+
               <input
                 id="correo"
+                name="correo-acceso"
                 type="email"
                 placeholder="ejemplo@correo.com"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
-                autoComplete="username"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
               />
             </div>
@@ -88,17 +100,21 @@ export default function Login({ sessionError, onLoginAttempt }: LoginProps) {
 
           <div className="form-group">
             <label htmlFor="password">Contraseña</label>
+
             <div className="input-container">
               <span className="input-icon">♙</span>
+
               <input
                 id="password"
+                name="clave-acceso"
                 type={mostrarPassword ? "text" : "password"}
                 placeholder="Ingresa tu contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="off"
                 required
               />
+
               <button
                 type="button"
                 className="toggle-password"
@@ -111,7 +127,9 @@ export default function Login({ sessionError, onLoginAttempt }: LoginProps) {
           </div>
 
           {(error || sessionError) && (
-            <div className="login-error">{error || sessionError}</div>
+            <div className="login-error">
+              {error || sessionError}
+            </div>
           )}
 
           <button

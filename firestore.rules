@@ -5,7 +5,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =====================================
-    // AUTENTICACIÓN Y PERFILES
+    // AUTENTICACION Y PERFILES
     // =====================================
 
     function signedIn() {
@@ -73,19 +73,46 @@ service cloud.firestore {
         && request.resource.data.cliente == ''
         && request.resource.data.fechaActualizacion == request.time;
 
-      allow update: if hasRole(['administrador', 'mozo'])
+      // Administrador y mozo pueden actualizar mesas.
+      allow update: if (
+        hasRole(['administrador', 'mozo'])
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['estado', 'cliente', 'fechaActualizacion'])
         && validState(request.resource.data.estado)
         && request.resource.data.cliente is string
         && request.resource.data.fechaActualizacion == request.time
         && (
-          (request.resource.data.estado == 'Ocupada'
-            && request.resource.data.cliente.size() > 0)
+          (
+            request.resource.data.estado == 'Ocupada'
+            && request.resource.data.cliente.size() > 0
+          )
           ||
-          (request.resource.data.estado == 'Disponible'
-            && request.resource.data.cliente == '')
-        );
+          (
+            request.resource.data.estado == 'Disponible'
+            && request.resource.data.cliente == ''
+          )
+        )
+      )
+      // Cajero puede liberar una mesa asociada a un pago.
+      || (
+        hasRole(['administrador', 'cajero'])
+        && resource.data.estado == 'Ocupada'
+        && request.resource.data.estado == 'Disponible'
+        && request.resource.data.cliente == ''
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['estado', 'cliente', 'fechaActualizacion', 'ultimoPagoId'])
+        && request.resource.data.fechaActualizacion == request.time
+        && request.resource.data.ultimoPagoId is string
+        && existsAfter(
+          /databases/$(database)/documents/pagos/$(request.resource.data.ultimoPagoId)
+        )
+        && getAfter(
+          /databases/$(database)/documents/pagos/$(request.resource.data.ultimoPagoId)
+        ).data.mesaId == mesaId
+        && getAfter(
+          /databases/$(database)/documents/pagos/$(request.resource.data.ultimoPagoId)
+        ).data.numeroMesa == resource.data.numero
+      );
 
       allow delete: if false;
     }
@@ -226,6 +253,60 @@ service cloud.firestore {
             && request.resource.data.vuelto == 0
           )
         );
+
+      allow update, delete: if false;
+    }
+
+    // =====================================
+    // AUDITORIA
+    // =====================================
+
+    match /auditoria/{auditoriaId} {
+
+      allow create: if activeUser()
+        && request.resource.data.keys().hasOnly([
+          'accion',
+          'descripcion',
+          'entidadId',
+          'mesaId',
+          'numeroMesa',
+          'detalles',
+          'usuarioId',
+          'correo',
+          'fecha'
+        ])
+        && request.resource.data.keys().hasAll([
+          'accion',
+          'descripcion',
+          'entidadId',
+          'usuarioId',
+          'correo',
+          'fecha'
+        ])
+        && request.resource.data.accion in [
+          'COMANDA_CREADA',
+          'PEDIDO_ESTADO_CAMBIADO',
+          'PAGO_REGISTRADO'
+        ]
+        && request.resource.data.descripcion is string
+        && request.resource.data.entidadId is string
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.correo is string
+        && request.resource.data.fecha == request.time
+        && (
+          !('mesaId' in request.resource.data)
+          || request.resource.data.mesaId is string
+        )
+        && (
+          !('numeroMesa' in request.resource.data)
+          || request.resource.data.numeroMesa is int
+        )
+        && (
+          !('detalles' in request.resource.data)
+          || request.resource.data.detalles is map
+        );
+
+      allow read: if hasRole(['administrador']);
 
       allow update, delete: if false;
     }

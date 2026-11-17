@@ -8,6 +8,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
+import { agregarAuditoriaAlLote } from "../services/auditoria";
 import "./Caja.css";
 
 interface ItemPedido {
@@ -140,13 +141,16 @@ export default function Caja() {
   );
 
   const montoRecibido = Number(recibido) || 0;
+
   const vuelto =
     metodo === "Efectivo" && cuentaActual
       ? Math.max(0, montoRecibido - cuentaActual.total)
       : 0;
 
   const registrarPago = async () => {
-    if (!auth.currentUser) {
+    const usuario = auth.currentUser;
+
+    if (!usuario) {
       alert("Debes iniciar sesión para registrar un pago.");
       return;
     }
@@ -172,19 +176,46 @@ export default function Caja() {
       const lote = writeBatch(db);
       const pagoRef = doc(collection(db, "pagos"));
 
+      const pedidosIds = cuentaActual.pedidos.map(
+        (pedido) => pedido.id
+      );
+
+      const recibidoFinal =
+        metodo === "Efectivo"
+          ? montoRecibido
+          : cuentaActual.total;
+
       lote.set(pagoRef, {
         numeroMesa: cuentaActual.numeroMesa,
         mesaId: cuentaActual.mesaId || "",
-        pedidosIds: cuentaActual.pedidos.map((pedido) => pedido.id),
+        pedidosIds,
         total: cuentaActual.total,
         metodo,
-        recibido:
-          metodo === "Efectivo" ? montoRecibido : cuentaActual.total,
+        recibido: recibidoFinal,
         vuelto,
-        usuarioId: auth.currentUser.uid,
+        usuarioId: usuario.uid,
         fecha: serverTimestamp(),
       });
 
+      // Registrar la auditoría en el mismo lote del pago.
+      agregarAuditoriaAlLote(lote, {
+        accion: "PAGO_REGISTRADO",
+        descripcion: `Se registró el pago de la mesa ${cuentaActual.numeroMesa}.`,
+        entidadId: pagoRef.id,
+        ...(cuentaActual.mesaId
+          ? { mesaId: cuentaActual.mesaId }
+          : {}),
+        numeroMesa: cuentaActual.numeroMesa,
+        detalles: {
+          total: cuentaActual.total,
+          metodo,
+          recibido: recibidoFinal,
+          vuelto,
+          pedidosIds,
+        },
+      });
+
+      // Actualizar todos los pedidos de la cuenta.
       cuentaActual.pedidos.forEach((pedido) => {
         lote.update(doc(db, "pedidos", pedido.id), {
           estadoPago: "Pagado",
@@ -245,6 +276,7 @@ export default function Caja() {
         <h2>Registrar pago</h2>
 
         <label htmlFor="caja-mesa">Seleccionar cuenta</label>
+
         <select
           id="caja-mesa"
           value={mesaSeleccionada}
@@ -254,6 +286,7 @@ export default function Caja() {
           }}
         >
           <option value="">Selecciona una mesa</option>
+
           {cuentas.map((cuenta) => (
             <option value={cuenta.clave} key={cuenta.clave}>
               Mesa {cuenta.numeroMesa} — S/ {cuenta.total.toFixed(2)}
@@ -270,19 +303,27 @@ export default function Caja() {
                 <div className="caja-pedido" key={pedido.id}>
                   <div>
                     <strong>Pedido {pedido.id.slice(0, 8)}</strong>
-                    <span>{pedido.items?.length || 0} producto(s)</span>
+                    <span>
+                      {pedido.items?.length || 0} producto(s)
+                    </span>
                   </div>
-                  <strong>S/ {Number(pedido.total).toFixed(2)}</strong>
+
+                  <strong>
+                    S/ {Number(pedido.total).toFixed(2)}
+                  </strong>
                 </div>
               ))}
 
               <div className="caja-total">
                 <span>Total a pagar</span>
-                <strong>S/ {cuentaActual.total.toFixed(2)}</strong>
+                <strong>
+                  S/ {cuentaActual.total.toFixed(2)}
+                </strong>
               </div>
             </div>
 
             <label htmlFor="caja-metodo">Método de pago</label>
+
             <select
               id="caja-metodo"
               value={metodo}
@@ -299,7 +340,10 @@ export default function Caja() {
 
             {metodo === "Efectivo" && (
               <>
-                <label htmlFor="caja-recibido">Dinero recibido (S/)</label>
+                <label htmlFor="caja-recibido">
+                  Dinero recibido (S/)
+                </label>
+
                 <input
                   id="caja-recibido"
                   type="number"
@@ -326,7 +370,9 @@ export default function Caja() {
                   montoRecibido < cuentaActual.total)
               }
             >
-              {guardando ? "Registrando pago..." : "Confirmar pago"}
+              {guardando
+                ? "Registrando pago..."
+                : "Confirmar pago"}
             </button>
           </>
         )}
@@ -342,7 +388,9 @@ export default function Caja() {
         <h2>Historial de pagos</h2>
 
         {pagos.length === 0 ? (
-          <p className="caja-vacio">Todavía no hay pagos registrados.</p>
+          <p className="caja-vacio">
+            Todavía no hay pagos registrados.
+          </p>
         ) : (
           <div className="caja-tabla-contenedor">
             <table className="caja-tabla">
@@ -354,12 +402,15 @@ export default function Caja() {
                   <th>Fecha</th>
                 </tr>
               </thead>
+
               <tbody>
                 {pagos.map((pago) => (
                   <tr key={pago.id}>
                     <td>Mesa {pago.numeroMesa}</td>
                     <td>{pago.metodo}</td>
-                    <td>S/ {Number(pago.total).toFixed(2)}</td>
+                    <td>
+                      S/ {Number(pago.total).toFixed(2)}
+                    </td>
                     <td>
                       {pago.fecha
                         ? pago.fecha.toDate().toLocaleString("es-PE")
